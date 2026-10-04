@@ -20,6 +20,9 @@ struct DayScreen: View {
     @State private var sheet: EntrySheet?
     @State private var errorMessage: String?
     @State private var tidier = TitleTidier()
+    @FocusState private var writingStart: Bool
+    /// A widget was tapped: the start bar gets the keyboard once the app is active.
+    @State private var startRequested = false
 
     private var running: TimeEntry? { runningEntries.first }
     private var isToday: Bool { dayOffset == 0 }
@@ -52,7 +55,7 @@ struct DayScreen: View {
             }
             .safeAreaBar(edge: .bottom) {
                 if isToday {
-                    StartBar(isRunning: running != nil, onStart: startEvent)
+                    StartBar(isRunning: running != nil, focused: $writingStart, onStart: startEvent)
                 }
             }
             .navigationTitle(title)
@@ -76,9 +79,24 @@ struct DayScreen: View {
             }
             watchLink.publish()
         }
-        // Whatever changes what is running (here, on the watch, or a tidied title) reaches the watch.
+        // Whatever changes what is running (here, on the watch, or a tidied title) reaches
+        // the widgets and the watch.
         .onChange(of: running.map { WatchSnapshot.Running(id: $0.id, title: $0.title, start: $0.start) }) {
             watchLink.publish()
+        }
+        // A widget was tapped: straight to writing what comes next.
+        .onOpenURL { url in
+            guard url == AppLink.start else { return }
+            sheet = nil
+            dayOffset = 0
+            startRequested = true
+        }
+        .task(id: startRequested && scenePhase == .active) {
+            guard startRequested, scenePhase == .active else { return }
+            // Let a closing sheet get out of the way first.
+            do { try await Task.sleep(for: .milliseconds(300)) } catch { return }
+            startRequested = false
+            writingStart = true
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
             today = .now

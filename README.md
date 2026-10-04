@@ -70,6 +70,24 @@ Chronoception reduces the recording workflow to entering an activity description
 - It uses system dictation. If the input screen opens with Scribble or the keyboard, tap its mic once; watchOS remembers, and from then on it opens straight into dictation.
 - The phone keeps the log. Starts and stops on the watch go straight to the phone, and starts, stops and tidied titles on the phone flow back to the watch. When the phone is out of reach, the watch queues its actions and delivers them in order later; an action delivered twice counts once.
 
+### Widgets and complications
+
+<table>
+  <tr>
+    <td align="center" width="50%"><img src="docs/images/watch-complication-idle.png" width="184" alt="Complications on the watch face"><br><b>Tap the complication and speak</b></td>
+    <td align="center" width="50%"><img src="docs/images/watch-complication-running.png" width="184" alt="The complications while timing"><br><b>The timer on the watch face</b></td>
+  </tr>
+  <tr>
+    <td align="center" width="50%"><img src="docs/images/iphone-widget-home.png" width="240" alt="The Home Screen widget"><br><b>Home Screen widget</b></td>
+    <td align="center" width="50%"><img src="docs/images/iphone-widget-lock.png" width="240" alt="Lock Screen widgets"><br><b>Lock Screen widgets</b></td>
+  </tr>
+</table>
+
+- **Apple Watch**: add Chronoception to a watch face as a circular, corner, rectangular or inline complication. When nothing is running, tapping it goes straight to dictation: say what you're about to do, confirm, and the timer starts. While something is running, it shows the title and a live timer; tap it to open the app and stop.
+- **iPhone**: a small Home Screen widget, plus circular, rectangular and inline widgets for the Lock Screen. Tapping one opens the app with the keyboard already in the start bar, ready to type or to dictate with the keyboard's mic.
+- Widgets follow every start and stop, on either device. The watch face catches up even when the watch app isn't open: the phone's update wakes it in the background.
+- `chronoception://start` also opens the start bar, for example from a shortcut.
+
 ### Background tidying (MiniMax, optional)
 
 Configure a MiniMax API key in Settings to enable background extraction of a concise title and any explicitly stated start time:
@@ -96,6 +114,7 @@ Settings exports the whole log as **JSON** (everything, including your original 
 - **ChronoceptionKit**: a shared Swift 6 package containing data models and core logic for timelines, title processing, export, and the sync protocol. Unit tests use Swift Testing and run on macOS.
 - **WatchConnectivity**: without iCloud, the phone is the single source of truth. The watch sends start and stop commands carrying the event's id, which may be queued, late or duplicated; the phone sends back a snapshot of what's running.
 - **MiniMax** through its OpenAI-compatible Chat Completions API, tidying titles in the background.
+- **WidgetKit**: one set of widget code (`Widgets/`), built into an iPhone extension and a watch extension. Each app keeps what's running in an App Group and reloads its widgets when that changes. The phone also sends the watch its snapshot with `transferCurrentComplicationUserInfo`, which wakes the watch app in the background to update the complication.
 
 ```mermaid
 flowchart LR
@@ -103,6 +122,8 @@ flowchart LR
     P -- "current activity snapshot" --> W
     P -- "activity description and start time" --> M["MiniMax"]
     M -- "title and extracted start time" --> P
+    P -- "App Group" --> PW["iPhone widgets"]
+    W -- "App Group" --> WC["Complications"]
 ```
 
 ## Build and run
@@ -126,6 +147,8 @@ Fill in two values in `Config/Local.xcconfig`, which is git-ignored:
   ```
   Use the 10-character team identifier in the certificate subject’s `OU=` field.
 - `BUNDLE_ID_PREFIX`: the application identifier prefix in reverse-DNS format, such as `io.github.yourname`.
+
+Automatic signing registers four App IDs (the two apps and their widget extensions) and the App Group `group.<BUNDLE_ID_PREFIX>.chronoception`. A free Apple ID supports both.
 
 Select the `Chronoception` scheme and target iPhone in Xcode, then press ⌘R to build and run. The watch app is embedded in the iPhone app. The `ChronoceptionWatch` scheme can also run directly on the target watch.
 

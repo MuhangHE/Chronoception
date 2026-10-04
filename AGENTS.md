@@ -16,6 +16,8 @@ Product requirements (Chinese): `docs/requirements.md`.
   minimal: speak, start, end.
 - `ChronoceptionKit` (`Packages/ChronoceptionKit`) — shared, UI-free Swift package.
   Put models and logic here so it can be tested with `swift test`.
+- `ChronoceptionWidgets` (iOS) and `ChronoceptionWatchWidgets` (watchOS) — the widgets,
+  both built from `Widgets/`. See Widgets below.
 
 ## Rules
 - The Xcode project is generated. Never edit `Chronoception.xcodeproj`; change
@@ -60,6 +62,25 @@ Product requirements (Chinese): `docs/requirements.md`.
   own last change.
 - `WatchLink` (phone) is created at launch, since a watch message can wake the app in
   the background. Publish after anything changes what is running.
+
+## Widgets
+- iPhone: Home Screen (small) and Lock Screen (circular, rectangular, inline). Watch:
+  complications (the same three plus corner). Platform differences are `#if os(...)` in
+  `Widgets/`; the iOS extension also compiles `Theme` and `TimeText`.
+- Widgets show `Glance`: the running event, kept in the defaults of the app group
+  (`APP_GROUP` in `Config/Base.xcconfig`, named in each Info.plist as
+  `ChronoceptionAppGroup`). The phone saves it in `WatchLink.publish()`, the watch in
+  `WatchSession`; each reloads its widgets only when it changed.
+- A tap opens `AppLink.start`. The phone gives the start bar the keyboard once the app
+  is active. The watch, unless something is running, presents the system text input
+  (`presentTextInputController` with no suggestions goes straight to dictation).
+- The phone also sends each changed snapshot with `transferCurrentComplicationUserInfo`,
+  which wakes the watch app in the background (`.backgroundTask(.watchConnectivity)`), so
+  the complication catches up. Don't gate it on `isComplicationEnabled`: the simulator
+  reports false with the complication on the face.
+- Testing on simulators: the watch can't open custom URLs (`simctl openurl` fails), so
+  put the complication on a face (long-press the face → Edit → Complications) and tap it.
+  The watch's text input has no dictation there; draw a stroke to enter a character.
 
 ## UI
 - Chinese only. Colors come from `Theme` (Claude's palette: ivory paper, warm ink,

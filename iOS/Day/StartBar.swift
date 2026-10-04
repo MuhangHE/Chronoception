@@ -4,16 +4,18 @@ import SwiftUI
 struct StartBar: View {
     /// Whether something is running now, which starting will end.
     let isRunning: Bool
+    /// Whether the field has the keyboard. The day screen gives it the keyboard when a
+    /// widget opens the app.
+    var focused: FocusState<Bool>.Binding
     let onStart: (String) -> Void
 
     @State private var text = ""
-    @FocusState private var focused: Bool
 
     var body: some View {
         HStack(alignment: .bottom, spacing: 4) {
             TextField(isRunning ? "接下来做什么？" : "现在要做什么？", text: $text, axis: .vertical)
                 .lineLimit(1...4)
-                .focused($focused)
+                .focused(focused)
                 .submitLabel(.go)
                 .foregroundStyle(Theme.ink)
                 .padding(.vertical, 11)
@@ -39,7 +41,7 @@ struct StartBar: View {
         .background(Theme.surface, in: .rect(cornerRadius: 20))
         .overlay {
             RoundedRectangle(cornerRadius: 20)
-                .strokeBorder(focused ? Theme.accent.opacity(0.5) : Theme.hairline)
+                .strokeBorder(focused.wrappedValue ? Theme.accent.opacity(0.5) : Theme.hairline)
         }
         .padding(.horizontal)
         .padding(.vertical, 10)
@@ -60,6 +62,6 @@ struct StartBar: View {
         guard !title.isEmpty else { return }
         onStart(title)
         text = ""
-        focused = false
+        focused.wrappedValue = false
     }
 }

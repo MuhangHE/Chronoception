@@ -2,10 +2,12 @@ import ChronoceptionKit
 import Foundation
 import SwiftData
 import WatchConnectivity
+import WidgetKit
 
 /// The phone's side of the watch connection: applies the watch's starts and stops to
-/// the log, which lives here, and keeps the watch told what is running. Set up at
-/// launch, since a message from the watch can wake the app in the background.
+/// the log, which lives here, and keeps the watch, and the widgets, told what is
+/// running. Set up at launch, since a message from the watch can wake the app in the
+/// background.
 final class WatchLink: NSObject, WCSessionDelegate {
     private let container: ModelContainer
     /// Called with the voice note of an event the watch started, to tidy its title.
@@ -19,14 +21,31 @@ final class WatchLink: NSObject, WCSessionDelegate {
         WCSession.default.activate()
     }
 
-    /// Tells the watch what is running. A newer call replaces one not yet delivered.
+    /// Tells the widgets and the watch what is running. A newer call replaces one not
+    /// yet delivered.
     func publish() {
+        let snapshot: WatchSnapshot
+        do {
+            snapshot = try TimeLog(context: container.mainContext).watchSnapshot()
+        } catch {
+            print("Reading what is running failed: \(error)")
+            return
+        }
+        let changed = Glance.save(snapshot.running)
+        if changed { WidgetCenter.shared.reloadAllTimelines() }
+
         guard WCSession.isSupported() else { return }
         let session = WCSession.default
         guard session.activationState == .activated, session.isPaired, session.isWatchAppInstalled else { return }
         do {
-            let snapshot = try TimeLog(context: container.mainContext).watchSnapshot()
-            try session.updateApplicationContext(WatchMessage.payload(for: snapshot))
+            let payload = try WatchMessage.payload(for: snapshot)
+            try session.updateApplicationContext(payload)
+            // Sent this way too, it arrives at once and wakes the watch app in the background
+            // to update its complication; the system allows 50 a day. (Not gated on
+            // isComplicationEnabled, which can read false with the complication on the face.)
+            if changed, session.remainingComplicationUserInfoTransfers > 0 {
+                session.transferCurrentComplicationUserInfo(payload)
+            }
         } catch {
             print("Telling the watch what is running failed: \(error)")
         }

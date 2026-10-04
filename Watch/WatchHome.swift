@@ -1,5 +1,6 @@
 import ChronoceptionKit
 import SwiftUI
+import WatchKit
 
 /// Open, say what you are about to do, and it starts; later, end it.
 struct WatchHome: View {
@@ -9,6 +10,20 @@ struct WatchHome: View {
     private let clay = Color(red: 0xD9 / 255, green: 0x77 / 255, blue: 0x57 / 255)
 
     var body: some View {
+        content
+            // The complication was tapped: with nothing running, straight to dictation.
+            .onOpenURL { url in
+                guard url == AppLink.start else { return }
+                Task {
+                    // Catch up with the phone first; the complication may have been behind.
+                    await session.receivePending()
+                    if session.running == nil { await dictate() }
+                }
+            }
+    }
+
+    @ViewBuilder
+    private var content: some View {
         if let running = session.running {
             VStack(spacing: 10) {
                 Text(running.title)
@@ -40,6 +55,16 @@ struct WatchHome: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
+        }
+    }
+
+    /// The system's text input, straight into dictation: no suggestions, plain text.
+    private func dictate() async {
+        let app = WKApplication.shared()
+        guard let controller = app.visibleInterfaceController ?? app.rootInterfaceController else { return }
+        let results = await controller.presentTextInputController(withSuggestions: nil, allowedInputMode: .plain)
+        if let text = results?.first as? String {
+            session.start(text)
         }
     }
 }

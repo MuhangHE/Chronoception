@@ -3,3 +3,6 @@ DEVELOPMENT_TEAM =
 BUNDLE_ID_PREFIX = io.github.example
 
 #include? "Local.xcconfig"
+
+// App 和小组件共用的容器：小组件从这里读正在进行的事。
+APP_GROUP = group.$(BUNDLE_ID_PREFIX).chronoception
