@@ -4,6 +4,7 @@ name: Chronoception
 
 options:
   createIntermediateGroups: true
+  developmentLanguage: zh-Hans # 界面只有中文；系统按钮（取消、完成…）也随之显示中文
   deploymentTarget:
     iOS: "26.0"     # iPhone 13 Pro：iOS 26 / 27 均可
     watchOS: "26.0" # Apple Watch SE 2：watchOS 26 是最后一个大版本，不要再调高
@@ -37,6 +38,7 @@ targets:
     settings:
       base:
         PRODUCT_NAME: Chronoception
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).chronoception
         TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: "YES"
@@ -56,6 +58,7 @@ targets:
     settings:
       base:
         PRODUCT_NAME: ChronoceptionWatch
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).chronoception.watchkitapp
         GENERATE_INFOPLIST_FILE: "YES"
         INFOPLIST_KEY_CFBundleDisplayName: Chronoception
