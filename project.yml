@@ -1,0 +1,80 @@
+# XcodeGen 项目定义 —— 唯一的真相源。
+# 改完运行 `xcodegen generate`；Chronoception.xcodeproj 是生成物，不入库。
+name: Chronoception
+
+options:
+  createIntermediateGroups: true
+  deploymentTarget:
+    iOS: "26.0"     # iPhone 13 Pro：iOS 26 / 27 均可
+    watchOS: "26.0" # Apple Watch SE 2：watchOS 26 是最后一个大版本，不要再调高
+
+configFiles:
+  Debug: Config/Base.xcconfig
+  Release: Config/Base.xcconfig
+
+settings:
+  base:
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+    SWIFT_APPROACHABLE_CONCURRENCY: "YES"
+    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_PREVIEWS: "YES"
+
+packages:
+  ChronoceptionKit:
+    path: Packages/ChronoceptionKit
+
+targets:
+  Chronoception:
+    type: application
+    platform: iOS
+    sources: [iOS]
+    dependencies:
+      - package: ChronoceptionKit
+      - target: ChronoceptionWatch # 自动放进 “Embed Watch Content”
+    settings:
+      base:
+        PRODUCT_NAME: Chronoception
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).chronoception
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: "YES"
+        INFOPLIST_KEY_CFBundleDisplayName: Chronoception
+        INFOPLIST_KEY_UILaunchScreen_Generation: "YES"
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: "YES"
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: Chronoception records short voice notes about how you spend your time.
+        INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: Chronoception turns your voice notes into time entries.
+
+  ChronoceptionWatch:
+    type: application
+    platform: watchOS
+    sources: [Watch]
+    dependencies:
+      - package: ChronoceptionKit
+    settings:
+      base:
+        PRODUCT_NAME: ChronoceptionWatch
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).chronoception.watchkitapp
+        GENERATE_INFOPLIST_FILE: "YES"
+        INFOPLIST_KEY_CFBundleDisplayName: Chronoception
+        INFOPLIST_KEY_WKApplication: "YES"
+        INFOPLIST_KEY_WKCompanionAppBundleIdentifier: $(BUNDLE_ID_PREFIX).chronoception
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: Chronoception records short voice notes about how you spend your time.
+
+schemes:
+  Chronoception:
+    build:
+      targets:
+        Chronoception: all
+    run:
+      config: Debug
+    archive:
+      config: Release
+  ChronoceptionWatch:
+    build:
+      targets:
+        ChronoceptionWatch: all
+    run:
+      config: Debug

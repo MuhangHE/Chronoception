@@ -1,0 +1,5 @@
+// 共享默认值（入库）。每个人自己的 Team / Bundle 前缀写在 Local.xcconfig（不入库）。
+DEVELOPMENT_TEAM =
+BUNDLE_ID_PREFIX = io.github.example
+
+#include? "Local.xcconfig"
